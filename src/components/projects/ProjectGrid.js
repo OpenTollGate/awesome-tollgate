@@ -1,12 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
-import ReleaseCard from './ReleaseCard';
+import ProjectCard from './ProjectCard';
 
-const ReleaseGrid = ({ releases }) => {
+const ProjectGrid = ({ projects }) => {
   return (
     <GridContainer>
-      {releases.map((release) => (
-        <ReleaseCard key={release.id} release={release} />
+      {projects.map((project) => (
+        <ProjectCard key={project.slug} project={project} />
       ))}
     </GridContainer>
   );
@@ -29,4 +29,4 @@ const GridContainer = styled.div`
   }
 `;
 
-export default ReleaseGrid;
+export default ProjectGrid;

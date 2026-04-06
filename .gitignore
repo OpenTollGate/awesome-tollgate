@@ -97,6 +97,9 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
+# Auto-generated manifest
+public/projects/manifest.json
+
 # Reference folders (exclude from git)
 reference-captive-portal/
 reference-tollgate-installer/
