@@ -3,7 +3,9 @@ name: TollGate Bash Client
 description: Automatic internet payment script using Cashu tokens — pay-per-use internet from your terminal.
 tags: [bash, cashu, client, auto-pay]
 links:
-  - label: Repository
+  - label: Repository (GitHub)
+    url: https://github.com/sh1ftred/tollgate-bash-client
+  - label: Repository (ngit)
     url: https://gitworkshop.dev/npub12m5exm2uk3xa674cc5r0hlyvccs5xxn7qv83ezuteefv5972nquq4j4szl/relay.ngit.dev/tollgate-bash-client
   - label: cocod
     url: https://github.com/Egge21M/cocod
