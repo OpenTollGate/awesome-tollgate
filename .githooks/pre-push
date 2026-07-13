@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Pre-push hook to run checks before pushing to remote
+# This script runs pre-commit checks and additional validation
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}🚀 Running pre-push checks...${NC}"
+
+# Get current branch and remote
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+
+echo -e "${YELLOW}Current branch: $CURRENT_BRANCH${NC}"
+if [ -n "$REMOTE_URL" ]; then
+    echo -e "${YELLOW}Remote: $REMOTE_URL${NC}"
+fi
+
+# Run pre-commit hook first
+echo -e "${YELLOW}🔍 Running pre-commit hook...${NC}"
+if ./.githooks/pre-commit; then
+    echo -e "${GREEN}✅ Pre-commit checks passed.${NC}"
+else
+    echo -e "${RED}❌ Pre-commit checks failed.${NC}"
+    echo -e "${YELLOW}Please fix issues before pushing.${NC}"
+    exit 1
+fi
+
+# Check for TODO/FIXME comments
+echo -e "${YELLOW}🔍 Checking for TODO/FIXME comments...${NC}"
+TODO_COUNT=$(git diff --cached --name-only | xargs grep -l -i "todo\|fixme" 2>/dev/null | wc -l)
+if [ "$TODO_COUNT" -gt 0 ]; then
+    echo -e "${YELLOW}⚠️  Found TODO/FIXME comments in $TODO_COUNT files:${NC}"
+    git diff --cached --name-only | xargs grep -n -i "todo\|fixme" | head -10
+    echo -e "${YELLOW}Consider addressing these before pushing.${NC}"
+else
+    echo -e "${GREEN}✅ No TODO/FIXME comments found.${NC}"
+fi
+
+# Check for large files (>1MB)
+echo -e "${YELLOW}🔍 Checking for large files (>1MB)...${NC}"
+LARGE_FILES=$(git diff --cached --name-only | xargs -I{} ls -lh {} 2>/dev/null | grep -E " [0-9.]+M " | wc -l)
+if [ "$LARGE_FILES" -gt 0 ]; then
+    echo -e "${RED}❌ Found $LARGE_FILES files larger than 1MB:${NC}"
+    git diff --cached --name-only | xargs -I{} ls -lh {} 2>/dev/null | grep -E " [0-9.]+M " | head -5
+    echo -e "${RED}Please consider optimizing large files before pushing.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ No large files detected.${NC}"
+fi
+
+# Check for merge conflicts
+echo -e "${YELLOW}🔍 Checking for merge conflicts...${NC}"
+CONFLICT_COUNT=$(git diff --cached --name-only | xargs grep -l -E "^<<<<<<<|=======|>>>>>>>$" 2>/dev/null | wc -l)
+if [ "$CONFLICT_COUNT" -gt 0 ]; then
+    echo -e "${RED}❌ Found merge conflicts in $CONFLICT_COUNT files:${NC}"
+    git diff --cached --name-only | xargs grep -l -E "^<<<<<<<|=======|>>>>>>>$" 2>/dev/null | head -3
+    echo -e "${RED}Please resolve merge conflicts before pushing.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ No merge conflicts detected.${NC}"
+fi
+
+# Check for trailing whitespace in staged files
+echo -e "${YELLOW}🔍 Checking for trailing whitespace...${NC}"
+WHITESPACE_COUNT=$(git diff --cached --check 2>/dev/null | wc -l)
+if [ "$WHITESPACE_COUNT" -gt 0 ]; then
+    echo -e "${YELLOW}⚠️  Found trailing whitespace in staged files:${NC}"
+    git diff --cached --check 2>/dev/null | head -5
+    echo -e "${YELLOW}Auto-fixing whitespace issues...${NC}"
+    git diff --cached | git apply --whitespace=fix --index
+    echo -e "${GREEN}✅ Whitespace issues fixed.${NC}"
+fi
+
+echo -e "${GREEN}✅ All pre-push checks passed!${NC}"

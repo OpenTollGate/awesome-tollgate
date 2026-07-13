@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Pre-commit hook to detect secrets and sensitive information
+# This script checks staged files for secrets before committing
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}🔍 Checking for secrets in staged files...${NC}"
+
+# Get all staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo -e "${GREEN}✅ No staged files to check.${NC}"
+    exit 0
+fi
+
+# Read secret patterns
+SECRET_PATTERNS_FILE=".secret-patterns.txt"
+if [ ! -f "$SECRET_PATTERNS_FILE" ]; then
+    echo -e "${RED}❌ Secret patterns file not found: $SECRET_PATTERNS_FILE${NC}"
+    exit 1
+fi
+
+# Check each staged file for secret patterns
+SECRETS_FOUND=false
+
+for file in $STAGED_FILES; do
+    # Skip binary files
+    if file "$file" | grep -q "binary"; then
+        continue
+    fi
+    
+    # Check for secret patterns
+    if git show ":$file" | grep -Eif "$SECRET_PATTERNS_FILE" > /dev/null 2>&1; then
+        echo -e "${RED}❌ Potential secrets found in: $file${NC}"
+        echo "Secret patterns detected:"
+        git show ":$file" | grep -Ein "$SECRET_PATTERNS_FILE" | head -5
+        echo "..."
+        SECRETS_FOUND=true
+    fi
+done
+
+if [ "$SECRETS_FOUND" = true ]; then
+    echo -e "${RED}❌ Commit aborted: Potential secrets detected in staged files${NC}"
+    echo "Please remove sensitive information before committing."
+    echo "If you believe these are false positives, use 'git commit -n' to bypass this hook."
+    exit 1
+fi
+
+echo -e "${GREEN}✅ No secrets detected in staged files.${NC}"

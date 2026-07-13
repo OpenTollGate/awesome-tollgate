@@ -4,6 +4,8 @@ description: Automatic internet payment script using Cashu tokens — pay-per-us
 tags: [bash, cashu, client, auto-pay]
 links:
   - label: Repository
+    url: https://github.com/Egge21M/tollgate-bash-client
+  - label: Original Repository
     url: https://gitworkshop.dev/npub12m5exm2uk3xa674cc5r0hlyvccs5xxn7qv83ezuteefv5972nquq4j4szl/relay.ngit.dev/tollgate-bash-client
   - label: cocod
     url: https://github.com/Egge21M/cocod
